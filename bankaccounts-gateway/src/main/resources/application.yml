@@ -1,0 +1,42 @@
+app:
+  config:
+    keycloak:
+      url: http://localhost
+      realm: bankaccounts-realm
+server:
+  port: 8090
+spring:
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            token-uri: ${app.config.keycloak.url}/realms/bankaccounts-realm/protocol/openid-connect/token
+            authorization-uri: ${app.config.keycloak.url}/realms/bankaccounts-realm/protocol/openid-connect/auth
+            user-name-attribute: preferred_username
+            user-info-uri: ${app.config.keycloak.url}/realms/bankaccounts-realm/protocol/openid-connect/userinfo
+            jwk-set-uri: ${app.config.keycloak.url}/realms/bankaccounts-realm/protocol/openid-connect/certs
+            user-info-authentication-method: header
+        registration:
+          bankaccounts-client:
+            provider: keycloak
+            client-id: bankaccounts-client
+            client-secret: 90fb3e99-e8b0-402a-8167-8bd100c41d91
+            authorization-grant-type: authorization_code
+            redirect-uri:  ${KEYLOACK_LOGIN_URL}/login/oauth2/code/keycloak
+            scope: openid
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${app.config.keycloak.url}/realms/bankaccounts-realm/protocol/openid-connect/certs
+  application:
+    name: bankaccounts-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: accounts-service
+          uri: lb://accounts-service
+          predicates:
+            - Path=/accounts/**
